@@ -1,145 +1,200 @@
-var fs = require("fs");
-const taskFilePath = './task.txt'
-const fd = fs.openSync(taskFilePath, 'a+')
-if (process.argv[2] === "add") {
-  if(!process.argv[3])
-  {
-    console.log("Error: Missing task string. Nothing added!")
-    return;
+const fs = require("fs"); 
+const process = require("process"); 
+
+let args = process.argv; 
+
+let command = args[2];
+
+ const info = () => {
+
+console.log(`Usage :-
+$ ./task add 2 hello world    # Add a new item with priority 2 and text "hello world" to the list
+$ ./task ls                   # Show incomplete priority list items sorted by priority in ascending order
+$ ./task del INDEX            # Delete the incomplete item with the given index
+$ ./task done INDEX           # Mark the incomplete item with the given index as complete
+$ ./task help                 # Show usage
+$ ./task report               # Statistics`                                                             
+);
+};
+
+// Ls command
+const pendingTasks = () => {
+  currentDate = new Date();
+  fs.readFile("task.txt", (err, data) => {
+    if (err) {
+      console.log(`There are no pending tasks!`);
+    } else {
+      let taskData = data.toString().split("\n");
+      if (taskData == "") {
+        console.log(`There are no pending tasks!`);
+      } else {
+        taskData.sort();
+        if (taskData[0] == "") {
+          taskData.shift();
+        }
+        console.log(`Pending : ${taskData.length}`);
+        for (let i = 0; i < taskData.length; i++) {
+          var temp = taskData[i].toString().split("");
+          var task = taskData[i].toString().substring(1);
+          console.log(`${i + 1}.${task} [${temp[0]}]`);
+        }
+      }
+    }
+  });
+};
+
+const pendingTasks2 = () => {
+  currentDate = new Date();
+  fs.readFile("task.txt", (err, data) => {
+    if (err) {
+      console.log(`There are no pending tasks!`);
+    } else {
+      let taskData = data.toString().split("\n");
+      if (taskData == "") {
+        console.log(`There are no pending tasks!`);
+      } else {
+        taskData.sort();
+        if (taskData[0] == "") {
+          taskData.shift();
+        }
+        console.log(`Pending : ${taskData.length}`);
+        for (let i = 0; i < taskData.length; i++) {
+          var temp = taskData[i].toString().split("");
+          var task = taskData[i].toString().substring(1);
+          console.log(`${i + 1}.${task} [${temp[0]}]\n`);
+        }
+      }
+    }
+  });
+};
+
+// Add pending tasks function
+const add = () => {
+  let p = args[3];
+  let argument = args[4];
+  if (p && argument) {
+    let addTask = `\n${p} ${argument}`;
+    fs.appendFile("task.txt", addTask, (err) => {
+      if (err) throw err;
+      else
+        console.log(`Added task: "${argument}" with priority ${p}`);
+    });
+  } else {
+    console.log(`Error: Missing tasks string. Nothing added!`);
   }
-  fs.appendFile("task.txt", `${process.argv[3] + "\n"}`, function (err) {
-    if (err) throw err;
-    console.log(`Added task: "${process.argv[3]}"`);
-  });
-}
-if (process.argv[2] === "ls") {
+};
 
-  fs.readFile("task.txt", "utf-8", function (err, data) {
-    if (err) throw err;
-    arr = data.split("\n");
-    arr=arr.filter((value)=>{
-      return value!==""
-    })
-    if(arr.length===0)
-    {
-     console.log(`There are no pending tasks!`);
-     return; 
-    }
-    
-    for(var i=arr.length-1;i>=0;i--)
-    {
-      console.log(`[${i+1}] ${arr[i]}`)
-    }
-  });
-}
-if (process.argv.length <= 2) {
-  let help = `Usage :-
-  $ ./task add 2 hello world    # Add a new item with priority 2 and text "hello world" to the list
-  $ ./task ls                   # Show incomplete priority list items sorted by priority in ascending order
-  $ ./task del INDEX            # Delete the incomplete item with the given index
-  $ ./task done INDEX           # Mark the incomplete item with the given index as complete
-  $ ./task help                 # Show usage
-  $ ./task report               # Statistics`;
-  console.log(help);
-}
-if (process.argv[2] == "del") {
-  const argumentValue = process.argv[3];
-
-  fs.readFile("task.txt", "utf-8", function (err, data) {
-    if (err) throw err;
-    if(process.argv.length<=3)
-    { 
-      console.log("Error: No such task for deletion.")
-        return
-    }
-    if(argumentValue==0) 
-    {
-      console.log("Error: No such task for deletion.")
-      return;
-    }
-    arr = data.split("\n");
-    arr=arr.filter((value)=>{
-      return value!==""
-    })
-    if (argumentValue > arr.length) {
-      console.log(
-        `Error: task #${argumentValue} does not exist. Nothing deleted.`
-      );
-      return;
-    }
-    else
-    {
-    arr.splice(argumentValue-1, 1);
-    fs.writeFile("task.txt", arr.join("\n"), function (err) {
-      if (err) throw err;
-      console.log(`Deleted task #${argumentValue}`);
-    });
-}
-  });
-}
-const getDate=(arg1)=>{
-
-var today = new Date();
-var dd = String(today.getDate()).padStart(2, '0');
-var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-var yyyy = today.getFullYear();
-today = yyyy + arg1 + mm + arg1 + dd;
-return today;
-
-}
-
-if(process.argv[2]==="done")
-{
-     const itemnumber=process.argv[3];
-     fs.readFile("task.txt", "utf-8", function (err, data) {
-      if (err) throw err;
-      if (!itemnumber) console.log("Error: No sich Number for marking task as done.")
-      if(itemnumber==0) 
-    {
-      console.log("Error: NO such task for deletion")
-      return;
-    }
-      arr = data.split("\n");
-      const item=arr[itemnumber-1];
-      arr.splice(itemnumber - 1, 1);
-     fs.writeFile("task.txt", arr.join("\n"), function (err) {
-      if (err) throw err;
-    });
-    fs.appendFile("done.txt",`x ${getDate('-')} ${item} \n`, function (err) {
-      if (err) throw err;
-      console.log(`Marked task #${itemnumber} as done.`)
-    });
-
-     })
-
-}
-if (process.argv[2] === "help") {
-  let help = `Usage :-
-  $ ./task add 2 hello world    # Add a new item with priority 2 and text "hello world" to the list
-  $ ./task ls                   # Show incomplete priority list items sorted by priority in ascending order
-  $ ./task del INDEX            # Delete the incomplete item with the given index
-  $ ./task done INDEX           # Mark the incomplete item with the given index as complete
-  $ ./task help                 # Show usage
-  $ ./task report               # Statistics`;
-  console.log(help);
-}
-if (process.argv[2] === "report") {
-
-  fs.readFile("task.txt", "utf-8", function (err, data1) {
-    if (err) throw err;
-    arr1 = data1.split("\n");
-    fs.readFile("done.txt", "utf-8", function (err, data2) {
-      if (err) throw err;
-      arr2 = data2.split("\n");
-      for(var i=arr1.length-1;i>=0;i--)
-        {
-      console.log(`Pending : [${i+1}] ${arr1[i]}`)
+// Delete command function
+const del = () => {
+  let index = args[3];
+  if (index) {
+    fs.readFile("task.txt", (err, data) => {
+      if (err)
+        console.log(
+            `  Error: task with index #${index} does not exist. Nothing deleted.`
+        );
+      else {
+        let taskData = data.toString().split("\n");
+        taskData.sort();
+        if (taskData[0] == "") {
+          taskData.shift();
         }
-    for(var i=arr2.length-1;i>=0;i--)
-        {
-          console.log(`Completed: [${i+1}] ${arr2[i]}`)
+        if (index > taskData.length || index < 1) {
+          console.log(`Error: task with index #${index} does not exist. Nothing deleted.`);
+        } else {
+          taskData.splice(index - 1, 1);
+          let newData = taskData.join("\n");
+          fs.writeFile("task.txt", newData, (err) => {
+            if (err) throw err;
+            else console.log(`Deleted task #${index}`);
+          });
         }
-    })
-    
-  })
+      }
+    });
+  } else {
+    console.log(`Error: Missing NUMBER for deleting tasks.`);
+  }
+};
+
+// Completed command function
+const done = () => {
+  let index = args[3];
+  if (index) {
+    fs.readFile("task.txt", (err, data) => {
+      if (err)
+        console.log(`Error: no incomplete item with index #${index} exists.`);
+      else {
+        let taskData = data.toString().split("\n");
+        taskData.sort();
+        if (index > taskData.length || index < 1)
+          console.log(`Error: no incomplete item with index #${index} exists.`);
+        else {
+          if (taskData[0] == "") taskData.shift();
+          let doneTask = taskData[index - 1].slice(1).trim();
+          fs.appendFile("completed.txt", doneTask + "\n", (err) => {
+            if (err) throw err;
+            else
+              console.log(`Marked item as done.`);
+          });
+          taskData.splice(index - 1, 1);
+          let newData = taskData.join("\n");
+          fs.writeFile("task.txt", newData, (err) => {
+            if (err) throw err;
+          });
+        }
+      }
+    });
+  } else {
+    console.log(`Error: Missing NUMBER for marking tasks as done.`);
+  }
+};
+
+//complete task func
+const completedTask = () => {
+  fs.readFile("completed.txt", (err, data) => {
+    if (err) {
+      console.log(`There are no completed tasks!`);
+    } else {
+      let ctaskData = data.toString().split("\n");
+      if (ctaskData == "") {
+        console.log(`There are no completed tasks!`);
+      } else {
+        ctaskData.pop();
+        console.log(`Completed : ${ctaskData.length}`);
+        for (let k = 0; k < ctaskData.length; k++) {
+          var cTask = ctaskData[k];
+          console.log(`${k + 1}. ${cTask}`);
+        }
+      }
+    }
+  });
+};
+
+//Report command
+const report = () => {
+  pendingTasks2();
+  completedTask();
+};
+
+switch (command) {
+  case "help":
+    info();
+    break;
+  case "ls":
+    pendingTasks();
+    break;
+  case "add":
+    add();
+    break;
+  case "del":
+    del();
+    break;
+  case "done":
+    done();
+    break;
+  case "report":
+    report();
+    break;
+  default:
+    info();
 }
